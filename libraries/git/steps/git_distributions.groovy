@@ -13,21 +13,21 @@ void call(){
     /*
       define a map of distributions and a closure for their own validations
     */
-    def options = [ 
-        "gitlab": { c -> println "gitlab config is ${c}"}, 
-        "github": { c -> println "github config is ${c}"}, 
+    def options = [
+        "gitlab": { c -> println "gitlab config is ${c}"},
+        "github": { c -> println "github config is ${c}"},
         "github_enterprise": { c -> println "github enterprise config is ${c}"}
     ]
 
     def submap = config.subMap(options.keySet())
     if(submap.size() != 1){
-        error "you must configure one distribution option, currently: ${submap.keySet()}" 
+        error "you must configure one distribution option, currently: ${submap.keySet()}"
     }
-    
+
     // get the distribution
     String dist = submap.keySet().first()
-    // invoke the distribution closure 
-    options[dist](config[dist])    
+    // invoke the distribution closure
+    options[dist](config[dist])
 
     env.GIT_LIBRARY_DISTRUBITION = dist
     this.init_env()
@@ -37,7 +37,7 @@ void call(){
 void init_env(){
     node{
         try{ unstash "workspace" }
-        catch(ignored) { 
+        catch(ignored) {
           println "'workspace' stash not present. Skipping git library environment variable initialization. To change this behavior, ensure the 'sdp' library is loaded"
           return
         }
@@ -63,6 +63,7 @@ void init_env(){
         }
 
         println "Found Git Build Cause: ${env.GIT_BUILD_CAUSE}"
+        cleanWs()
     }
     return
 }
