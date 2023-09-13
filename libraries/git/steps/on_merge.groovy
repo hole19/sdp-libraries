@@ -70,16 +70,28 @@ String get_merged_from(){
       if(!branch.contains("^"))
         branchNames.add(branch)
     }
+    // Didn't find any branch name, so last try is to check if can find it on the Merge message
+    if (!branchNames){
+      branchNames.add(get_source_branch())
+    }
     return branchNames
   }
 }
 
 String get_feature_branch_sha(){
+  run_script "git rev-parse \$(git --no-pager log -n1 | grep Merge: | awk '{print \$3}')"
+}
+
+String get_source_branch(){
+  run_script "git --no-pager log -1 | grep 'Merge pull' | awk '{print \$6}'"
+}
+
+String run_script(command){
   node{
     unstash "workspace"
     sh(
-      script: "git rev-parse \$(git --no-pager log -n1 | grep Merge: | awk '{print \$3}')",
+      script: command,
       returnStdout: true
-     ).trim()
+    ).trim()
   }
 }
