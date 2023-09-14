@@ -51,15 +51,15 @@ void init_env(){
         }
         env.ORG_NAME = parts.getAt(0)
         env.REPO_NAME = parts[1..-1].join("/") - ".git"
-        env.GIT_SHA = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+        env.GIT_SHA = run_script "git rev-parse HEAD"
 
         if (env.CHANGE_TARGET){
             env.GIT_BUILD_CAUSE = "pr"
+            env.CHANGE_AUTHOR_EMAIL= run_script "git log -1 --pretty=format:'%ae'"
         } else {
-            env.GIT_BUILD_CAUSE = sh (
-              script: 'git rev-list HEAD --parents -1 | wc -w', // will have 2 shas if commit, 3 or more if merge
-              returnStdout: true
-            ).trim().toInteger() > 2 ? "merge" : "commit"
+            env.GIT_BUILD_CAUSE = run_script(
+              'git rev-list HEAD --parents -1 | wc -w'
+            ).toInteger() > 2 ? "merge" : "commit" // will have 2 shas if commit, 3 or more if merge
 
             if (env.GIT_BUILD_CAUSE == 'merge'){
               env.FEATURE_SHA = get_feature_branch_sha()
@@ -71,6 +71,13 @@ void init_env(){
         cleanWs()
     }
     return
+}
+
+String run_script(command){
+  sh(
+    script: command,
+    returnStdout: true
+  ).trim()
 }
 
 def fetch(){
@@ -142,11 +149,4 @@ ArrayList get_merged_from(){
 
 String get_branch_from_last_commit(){
   run_script "git --no-pager log -1 | grep 'Merge pull' | awk '{print \$6}'"
-}
-
-String run_script(command){
-  sh(
-    script: command,
-    returnStdout: true
-  ).trim()
 }
